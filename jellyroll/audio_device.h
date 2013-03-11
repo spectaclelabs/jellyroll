@@ -1,12 +1,12 @@
 #ifndef AUDIO_DEVICE_H
 #define AUDIO_DEVICE_H
 
-#ifdef __PRODUCTION__
-#include "audio_device.production.h"
+#ifdef TARGET_LPC1768
+#include "audio_device.lpc1768.h"
 #endif
 
-#ifdef __TESTING__
-#include "audio_device.testing.h"
+#ifdef TARGET_DESKTOP
+#include "audio_device.desktop.h"
 #endif
 
 #endif

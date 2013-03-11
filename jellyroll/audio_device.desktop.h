@@ -1,14 +1,18 @@
-#ifndef AUDIO_DEVICE_TESTING_H
-#define AUDIO_DEVICE_TESTING_H
+#ifndef AUDIO_DEVICE_DESKTOP_H
+#define AUDIO_DEVICE_DESKTOP_H
 
 #include <cstddef>
 #include <functional>
+#include <thread>
+#include <chrono>
 
 #include "RtAudio.h"
 
 #include "thelonious/types.h"
 #include "thelonious/sizes.h"
 #include "thelonious/rates.h"
+
+#include "desktop.h"
 
 using namespace thelonious;
 
@@ -17,13 +21,13 @@ namespace jellyroll {
 template <size_t inputChannels, size_t outputChannels, size_t blocksPerBuffer=8>
 class AudioDevice {
 public:
-    AudioDevice() : bufferSize(BLOCK_SIZE * blocksPerBuffer) {
+    AudioDevice() : bufferSize(BLOCK_SIZE * blocksPerBuffer), inputBlockIndex(blocksPerBuffer), outputBlockIndex(blocksPerBuffer) {
         RtAudio::StreamParameters inputParameters;
-        inputParameters.deviceId = TESTING_DEVICE;
+        inputParameters.deviceId = DESKTOP_DEVICE;
         inputParameters.nChannels = inputChannels;
 
         RtAudio::StreamParameters outputParameters;
-        outputParameters.deviceId = TESTING_DEVICE;
+        outputParameters.deviceId = DESKTOP_DEVICE;
         outputParameters.nChannels = outputChannels;
 
         RtAudio::StreamOptions options;
@@ -55,67 +59,60 @@ public:
                  uint32_t nBufferFrames, double streamTime,
                  RtAudioStreamStatus status, void *device) {
         AudioDevice *castDevice = (AudioDevice *) device;
-        castDevice->inputSamples = (Sample *) inputSamples;
-        castDevice->outputSamples = (Sample *) outputSamples;
-        
-        for (uint32_t i=0; i<blocksPerBuffer; i++) {
-            castDevice->runCallback();
-        }
+        castDevice->inputSamples = (float *) inputSamples;
+        castDevice->outputSamples = (float *) outputSamples;
+
+        castDevice->inputBlockIndex = 0;
+        castDevice->outputBlockIndex = 0;
         return 0;
     }
 
 
     Block<inputChannels> read() {
-        int i=0;
-        for (auto it=inputBlock.begin(); it!=inputBlock.end(); it++, i++) {
-            Chock chock = *it;
-            Sample *channelStart = inputSamples + i * bufferSize;
-            Sample *blockStart = channelStart + inputBlockIndex * BLOCK_SIZE;
-            Sample *blockEnd = blockStart + BLOCK_SIZE;
+        while (inputBlockIndex == blocksPerBuffer) {
+            std::chrono::milliseconds sleepTime(1);
+            std::this_thread::sleep_for(sleepTime);
+        }
+
+        Block<inputChannels> block;
+        for (uint32_t i=0; i<inputChannels; i++) {
+            Chock chock = block[i];
+            // The start of the channel in the outputSamples buffer
+            float *channelStart = inputSamples + i * bufferSize;
+            // The start of the block we are interested in
+            float *blockStart = channelStart + inputBlockIndex * BLOCK_SIZE;
+            float *blockEnd = blockStart + BLOCK_SIZE;
             std::copy(blockStart, blockEnd, chock.begin());
         }
 
         inputBlockIndex++;
-        if (inputBlockIndex == blocksPerBuffer) {
-            inputBlockIndex = 0;
-        }
+        return block;
     }
 
     void write(Block<outputChannels> outputBlock) {
-        int i=0;
-        for (auto it=outputBlock.begin(); it!=outputBlock.end(); it++, i++) {
-            Chock chock = *it;
-            Sample *channelStart = outputSamples + i * bufferSize;
-            Sample *blockStart = channelStart + outputBlockIndex * BLOCK_SIZE;
+        while (outputBlockIndex == blocksPerBuffer) {
+            std::chrono::milliseconds sleepTime(1);
+            std::this_thread::sleep_for(sleepTime);
+        }
+
+        for (uint32_t i=0; i<outputChannels; i++) {
+            Chock chock = outputBlock[i];
+            // The start of the channel in the outputSamples buffer
+            float *channelStart = outputSamples + i * bufferSize;
+            // The start of the block we are interested in
+            float *blockStart = channelStart + outputBlockIndex * BLOCK_SIZE;
             std::copy(chock.begin(), chock.end(), blockStart);
         }
 
         outputBlockIndex++;
-        if (outputBlockIndex == blocksPerBuffer) {
-            outputBlockIndex = 0;
-        }
-         
     };
-
-    void onTick(const std::function<void()> &callback) {
-        tickCallback = callback;
-    }
-
-    void runCallback() {
-        if (tickCallback != nullptr) {
-            tickCallback();
-        }
-    }
 
 private:
     RtAudio device;
-    std::function<void()> tickCallback;
     uint32_t bufferSize;
 
-    Sample *inputSamples;
-    Sample *outputSamples;
-
-    Block<inputChannels> inputBlock;
+    float *inputSamples;
+    float *outputSamples;
 
     uint32_t inputBlockIndex;
     uint32_t outputBlockIndex;
