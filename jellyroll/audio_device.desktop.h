@@ -9,8 +9,8 @@
 #include "RtAudio.h"
 
 #include "thelonious/types.h"
-#include "thelonious/sizes.h"
-#include "thelonious/rates.h"
+#include "thelonious/constants/sizes.h"
+#include "thelonious/constants/rates.h"
 
 #include "desktop.h"
 
@@ -21,7 +21,10 @@ namespace jellyroll {
 template <size_t inputChannels, size_t outputChannels, size_t blocksPerBuffer=8>
 class AudioDevice {
 public:
-    AudioDevice() : bufferSize(BLOCK_SIZE * blocksPerBuffer), inputBlockIndex(blocksPerBuffer), outputBlockIndex(blocksPerBuffer) {
+    AudioDevice() :
+            bufferSize(thelonious::constants::BLOCK_SIZE * blocksPerBuffer),
+            inputBlockIndex(blocksPerBuffer),
+            outputBlockIndex(blocksPerBuffer) {
         RtAudio::StreamParameters inputParameters;
         inputParameters.deviceId = DESKTOP_DEVICE;
         inputParameters.nChannels = inputChannels;
@@ -36,7 +39,8 @@ public:
         try {
             device.openStream(outputChannels > 0 ? &outputParameters: NULL,
                               inputChannels > 0 ? &inputParameters : NULL,
-                              RTAUDIO_FLOAT32, SAMPLE_RATE, &bufferSize,
+                              RTAUDIO_FLOAT32,
+                              thelonious::constants::SAMPLE_RATE, &bufferSize,
                               &AudioDevice::callback, (void *) this, &options);
             device.startStream();
         }
@@ -80,8 +84,9 @@ public:
             // The start of the channel in the outputSamples buffer
             float *channelStart = inputSamples + i * bufferSize;
             // The start of the block we are interested in
-            float *blockStart = channelStart + inputBlockIndex * BLOCK_SIZE;
-            float *blockEnd = blockStart + BLOCK_SIZE;
+            float *blockStart = channelStart + inputBlockIndex *
+                                thelonious::constants::BLOCK_SIZE;
+            float *blockEnd = blockStart + thelonious::constants::BLOCK_SIZE;
             std::copy(blockStart, blockEnd, chock.begin());
         }
 
@@ -100,7 +105,8 @@ public:
             // The start of the channel in the outputSamples buffer
             float *channelStart = outputSamples + i * bufferSize;
             // The start of the block we are interested in
-            float *blockStart = channelStart + outputBlockIndex * BLOCK_SIZE;
+            float *blockStart = channelStart + outputBlockIndex *
+                                thelonious::constants::BLOCK_SIZE;
             std::copy(chock.begin(), chock.end(), blockStart);
         }
 

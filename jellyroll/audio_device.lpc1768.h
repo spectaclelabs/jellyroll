@@ -7,9 +7,9 @@
 #include "mbed.h"
 
 #include "thelonious/types.h"
-#include "thelonious/sizes.h"
-#include "thelonious/rates.h"
 #include "thelonious/util.h"
+#include "thelonious/constants/sizes.h"
+#include "thelonious/constants/rates.h"
 
 using namespace thelonious;
 
@@ -19,9 +19,11 @@ template <size_t inputChannels, size_t outputChannels, size_t blocksPerBuffer=2>
 class AudioDevice {
 public:
     AudioDevice() :
-        out(P0_26), dout(P0_22), bufferSize(BLOCK_SIZE * blocksPerBuffer),
-        readPosition(0), writePosition(bufferSize - 1) {
-        readTicker.attach(this, &AudioDevice::readTask, 1.0 * INV_SAMPLE_RATE);
+            out(P0_26), dout(P0_22),
+            bufferSize(thelonious::constants::BLOCK_SIZE * blocksPerBuffer),
+            readPosition(0), writePosition(bufferSize - 1) {
+        readTicker.attach(this, &AudioDevice::readTask,
+                          1.0 * thelonious::constants::INV_SAMPLE_RATE);
     }
 
     void readTask() {
@@ -44,7 +46,7 @@ public:
 
     void write(Block<outputChannels> outputBlock) {
         Chock & chock = outputBlock[0];
-        for (uint32_t i=0; i<BLOCK_SIZE; i++) {
+        for (uint32_t i=0; i<thelonious::constants::BLOCK_SIZE; i++) {
             while (writePosition + 1 % bufferSize == readPosition) {
                 // Block while buffer is full
             }
@@ -62,7 +64,8 @@ private:
     volatile uint32_t readPosition;
     volatile uint32_t writePosition;
 
-    volatile float buffer[outputChannels][BLOCK_SIZE * blocksPerBuffer];
+    volatile float buffer[outputChannels][thelonious::constants::BLOCK_SIZE *
+                                          blocksPerBuffer];
 };
 
 }
