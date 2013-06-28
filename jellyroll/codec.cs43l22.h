@@ -33,7 +33,7 @@ public:
         writeRegister(0x04, 0xAF);
 
         // Auto detect clock
-        writeRegister(0x05, 0x81);
+        writeRegister(0x05, 0x80);
 
         // I2S Slave Mode, 16 bit
         writeRegister(0x06, 0x07);
