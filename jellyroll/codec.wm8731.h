@@ -3,10 +3,13 @@
 
 #include "mbed.h"
 
+#include "thelonious/types.h"
 #include "thelonious/constants/sizes.h"
 
 #include "codec.h"
 #include "i2s.h"
+
+namespace jellyroll {
 
 template <size_t N>
 class WM8731Codec : public Codec<N> {
@@ -51,10 +54,10 @@ public:
         i2s.start();
     }
 
-    void tick(Block<N> &samples) {
+    void tick(thelonious::Block<N> &samples) {
     }
 
-    void tickIn(Block<N> &samples) {
+    void tickIn(thelonious::Block<N> &samples) {
         for (uint32_t i=0; i<thelonious::constants::BLOCK_SIZE; i++) {
             for (uint32_t j=0; j<2; j++) {
                 if (j >= N) {
@@ -92,6 +95,8 @@ private:
 
     int16_t *outputBuffer;
 };
+
+} // namespace jellyroll
 
 
 #endif

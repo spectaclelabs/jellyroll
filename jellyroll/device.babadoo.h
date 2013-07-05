@@ -6,6 +6,8 @@
 #include "device.h"
 #include "codec.wm8731.h"
 
+namespace jellyroll {
+
 template <uint32_t N>
 class BabadooDevice : public Device<WM8731Codec<N>, N> {
 public:
@@ -37,5 +39,7 @@ private:
 
 template <size_t N>
 using BabadooN = BabadooDevice<N>;
+
+} // namespace jellyroll
 
 #endif

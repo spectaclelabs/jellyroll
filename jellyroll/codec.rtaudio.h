@@ -8,6 +8,8 @@
 
 #include "codec.h"
 
+namespace jellyroll {
+
 template <uint32_t N>
 class RtAudioCodec : public Codec<N> {
 public:
@@ -37,5 +39,7 @@ public:
 private:
     AudioDeviceN<N> device;
 };
+
+} // namespace jellyroll
 
 #endif

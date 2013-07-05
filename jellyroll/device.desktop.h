@@ -8,6 +8,8 @@
 #define AUDIO_DEVICE -1
 #endif
 
+namespace jellyroll {
+
 template <size_t N>
 class DesktopDevice : public Device<RtAudioCodec<N>, N> {
 public:
@@ -16,5 +18,7 @@ public:
 
 template <size_t N>
 using BabadooN = DesktopDevice<N>;
+
+} // namespace jellyroll
 
 #endif

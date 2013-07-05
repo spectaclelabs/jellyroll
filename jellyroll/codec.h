@@ -4,13 +4,13 @@
 #include "thelonious/duplex.h"
 #include "thelonious/types.h"
 
-using namespace thelonious;
+namespace jellyroll {
 
 template <uint32_t N>
-class Codec : public Duplex<N> {
+class Codec : public thelonious::Duplex<N> {
 public:
-    virtual void tick(Block<N> & block) = 0;
-    virtual void tickIn(Block<N> & block) = 0;
+    virtual void tick(thelonious::Block<N> & block) = 0;
+    virtual void tickIn(thelonious::Block<N> & block) = 0;
     virtual void start() = 0;
     virtual void wait() {
         while (1);
@@ -24,5 +24,7 @@ public:
 protected:
     void (*onAudioCallback)();
 };
+
+} // namespace jellyroll
 
 #endif

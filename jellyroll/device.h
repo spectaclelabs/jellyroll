@@ -6,7 +6,7 @@
 
 #include "io_types.h"
 
-using namespace thelonious;
+namespace jellyroll {
 
 template <typename CodecType, uint32_t N>
 class Device : public CodecType {
@@ -27,5 +27,7 @@ public:
     virtual void setOutputType(OutputType type) {
     }
 };
+
+} // namespace jellyroll
 
 #endif

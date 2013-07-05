@@ -1,6 +1,8 @@
 #ifndef JELLYROLL_IO_TYPES
 #define JELLYROLL_IO_TYPES
 
+namespace jellyroll {
+
 enum InputType {
     LINE_IN,
     INSTRUMENT_IN,
@@ -12,5 +14,7 @@ enum OutputType {
     HEADPHONE_OUT,
     SPEAKER_OUT
 };
+
+} // namespace jellyroll
 
 #endif

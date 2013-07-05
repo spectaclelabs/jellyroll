@@ -6,6 +6,8 @@
 
 #include "thelonious/constants/sizes.h"
 
+namespace jellyroll {
+
 FunctionPointer i2sirq;
 
 typedef void (*I2SCallback) (int16_t *, uint32_t, void *data);
@@ -302,5 +304,7 @@ private:
     I2SCallback callback = nullptr;
     void *data;
 };
+
+} // namespace jellyroll
 
 #endif

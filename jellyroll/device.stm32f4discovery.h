@@ -6,6 +6,8 @@
 #include "device.h"
 #include "codec.cs43l22.h"
 
+namespace jellyroll {
+
 template <size_t N>
 class STM32F4DiscoveryDevice : public Device<CS43L22Codec<N>, N> {
 public:
@@ -17,5 +19,7 @@ public:
 
 template <size_t N>
 using BabadooN = STM32F4DiscoveryDevice<N>;
+
+} // namespace jellyroll
 
 #endif
