@@ -16,11 +16,11 @@ public:
     RtAudioCodec(int device=-1) : device(device, device) {
     }
 
-    void tick(Block<N> & block) {
+    void tick(thelonious::Block<N> & block) {
         device.tick(block);
     }
 
-    void tickIn(Block<N> & block) {
+    void tickIn(thelonious::Block<N> & block) {
         device.tickIn(block);
     }
 
@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    AudioDeviceN<N> device;
+    thelonious::AudioDeviceN<N> device;
 };
 
 } // namespace jellyroll

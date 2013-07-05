@@ -8,4 +8,8 @@
 #include "jellyroll/device.desktop.h"
 #endif
 
+namespace jellyroll {
+
 typedef BabadooN<1> Babadoo;
+
+} // namespace jellyroll
