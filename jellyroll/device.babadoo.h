@@ -1,11 +1,20 @@
-#ifndef JELLYROLL_BABADOO_BABADOO
-#define JELLYROLL_BABADOO_BABADOO
+#ifndef JELLYROLL_DEVICE_BABADOO
+#define JELLYROLL_DEVICE_BABADOO
 
-#include "thelonious.h"
+#include "mbed.h"
+
+#include "device.h"
+#include "codec.wm8731.h"
 
 template <uint32_t N>
-class BabadooDevice : Device<WM8731Codec, N> {
+class BabadooDevice : public Device<WM8731Codec<N>, N> {
 public:
+    BabadooDevice() :
+            Device<WM8731Codec<N>, N>(PB_15, PB_12, PB_13, PC_6, PB_11, PB_10),
+            outputSwitch(PC_9) {
+        outputSwitch = 1;
+    }
+    /*
     void setInputGain(float gain) {
         codec.setInputGain(gain);
     }
@@ -21,6 +30,12 @@ public:
     void setOutputType(OutputType type) {
         codec.setOutputType(type);
     }
+    */
+private:
+    DigitalOut outputSwitch;
 };
+
+template <size_t N>
+using BabadooN = BabadooDevice<N>;
 
 #endif
