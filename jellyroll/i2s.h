@@ -25,40 +25,40 @@ typedef enum {
 } I2SEName;
 
 static const PinMap PinMap_I2S_CK[] = {
-    {PB_3, I2S_3, 2, 6},
-    {PB_10, I2S_2, 2, 5},
-    {PB_13, I2S_2, 2, 5},
-    {PC_10, I2S_3, 2, 6},
-    {NC   , NC   , 0, 0}
+    {PB_3, I2S_3, STM_PIN_DATA(2, 6)},
+    {PB_10, I2S_2, STM_PIN_DATA(2, 5)},
+    {PB_13, I2S_2, STM_PIN_DATA(2, 5)},
+    {PC_10, I2S_3, STM_PIN_DATA(2, 6)},
+    {NC   , NC   , 0}
 };
 
 static const PinMap PinMap_I2S_SD[] = {
-    {PB_5, I2S_3, 2, 6},
-    {PB_15, I2S_2, 2, 5},
-    {PC_3, I2S_2, 2, 5},
-    {PC_12, I2S_3, 2, 6},
-    {NC   , NC   , 0, 0}
+    {PB_5, I2S_3, STM_PIN_DATA(2, 6)},
+    {PB_15, I2S_2, STM_PIN_DATA(2, 5)},
+    {PC_3, I2S_2, STM_PIN_DATA(2, 5)},
+    {PC_12, I2S_3, STM_PIN_DATA(2, 6)},
+    {NC   , NC   , 0}
 };
 
 static const PinMap PinMap_I2S_ext_SD[] = {
-    {PB_14, I2SE_2, 2, 6},
-    {PC_2, I2SE_2, 2, 6},
-    {PC_11, I2SE_3, 2, 5},
-    {NC   , NC   , 0, 0}
+    {PB_14, I2SE_2, STM_PIN_DATA(2, 6)},
+    {PC_2, I2SE_2, STM_PIN_DATA(2, 6)},
+    {PC_11, I2SE_3, STM_PIN_DATA(2, 5)},
+    {NC   , NC   , 0}
 };
 
 static const PinMap PinMap_I2S_WS[] = {
-    {PA_4, I2S_3, 2, 6},
-    {PA_15, I2S_3, 2, 6},
-    {PB_9, I2S_2, 2, 5},
-    {PB_12, I2S_2, 2, 5},
-    {NC   , NC   , 0, 0}
+    {PA_4, I2S_3, STM_PIN_DATA(2, 6)},
+    {PA_15, I2S_3, STM_PIN_DATA(2, 6)},
+    {PB_9, I2S_2, STM_PIN_DATA(2, 5)},
+    {PB_12, I2S_2, STM_PIN_DATA(2, 5)},
+    {NC   , NC   , STM_PIN_DATA(0, 0)}
 };
 
 static const PinMap PinMap_I2S_MCK[] = {
-    {PC_6, I2S_2, 2, 5},
-    {PC_7, I2S_3, 2, 6}, 
-    {NC   , NC   , 0, 0}
+    {PC_6, I2S_2, STM_PIN_DATA(2, 5)},
+    {PC_7, I2S_3, STM_PIN_DATA(2, 6)}, 
+    {NC   , NC   , 0}
 };
 
 class I2S {
