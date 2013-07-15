@@ -10,17 +10,18 @@
 
 namespace jellyroll {
 
-template <uint32_t N>
-class RtAudioCodec : public Codec<N> {
+template <uint32_t M, uint32_t N>
+class RtAudioCodec : public Codec<M, N> {
 public:
-    RtAudioCodec(int device=-1) : device(device, device) {
+    RtAudioCodec(int inputDevice=-1, int outputDevice=-1) :
+                 device(inputDevice, outputDevice) {
     }
 
-    void tick(thelonious::Block<N> & block) {
-        device.tick(block);
+    void tickOut(thelonious::Block<N> & block) {
+        device.tickOut(block);
     }
 
-    void tickIn(thelonious::Block<N> & block) {
+    void tickIn(thelonious::Block<M> & block) {
         device.tickIn(block);
     }
 
@@ -37,7 +38,7 @@ public:
     }
 
 private:
-    thelonious::AudioDeviceN<N> device;
+    thelonious::AudioDeviceN<M, N> device;
 };
 
 } // namespace jellyroll

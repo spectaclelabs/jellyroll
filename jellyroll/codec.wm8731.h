@@ -11,8 +11,8 @@
 
 namespace jellyroll {
 
-template <size_t N>
-class WM8731Codec : public Codec<N> {
+template <size_t M, size_t N>
+class WM8731Codec : public Codec<M, N> {
 public:
     WM8731Codec(PinName i2s_sd, PinName i2s_ws, PinName i2s_ck,
                  PinName i2s_mck, PinName i2c_sda, PinName i2c_scl) : 
@@ -54,13 +54,13 @@ public:
         i2s.start();
     }
 
-    void tick(thelonious::Block<N> &samples) {
+    void tickOut(thelonious::Block<N> &samples) {
     }
 
-    void tickIn(thelonious::Block<N> &samples) {
+    void tickIn(thelonious::Block<M> &samples) {
         for (uint32_t i=0; i<thelonious::constants::BLOCK_SIZE; i++) {
             for (uint32_t j=0; j<2; j++) {
-                if (j >= N) {
+                if (j >= M) {
                     continue;
                 }
                 float sample = samples[j][i];

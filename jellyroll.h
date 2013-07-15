@@ -10,6 +10,6 @@
 
 namespace jellyroll {
 
-typedef BabadooN<1> Babadoo;
+typedef BabadooN<1, 1> Babadoo;
 
 } // namespace jellyroll

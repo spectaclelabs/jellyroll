@@ -8,7 +8,7 @@
 
 namespace jellyroll {
 
-template <typename CodecType, uint32_t N>
+template <typename CodecType, uint32_t M, uint32_t N>
 class Device : public CodecType {
 public:
     // Constructor simply forward arguments to codec

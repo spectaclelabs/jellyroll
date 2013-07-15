@@ -6,11 +6,9 @@
 
 namespace jellyroll {
 
-template <uint32_t N>
-class Codec : public thelonious::Duplex<N> {
+template <uint32_t M, uint32_t N>
+class Codec : public thelonious::Duplex<M, N> {
 public:
-    virtual void tick(thelonious::Block<N> & block) = 0;
-    virtual void tickIn(thelonious::Block<N> & block) = 0;
     virtual void start() = 0;
     virtual void wait() {
         while (1);

@@ -10,14 +10,14 @@
 
 namespace jellyroll {
 
-template <size_t N>
-class DesktopDevice : public Device<RtAudioCodec<N>, N> {
+template <size_t M, size_t N>
+class DesktopDevice : public Device<RtAudioCodec<M, N>, M, N> {
 public:
-    DesktopDevice() : Device<RtAudioCodec<N>, N>(AUDIO_DEVICE) {}
+    DesktopDevice() : Device<RtAudioCodec<M, N>, M, N>(AUDIO_DEVICE) {}
 };
 
-template <size_t N>
-using BabadooN = DesktopDevice<N>;
+template <size_t M, size_t N>
+using BabadooN = DesktopDevice<M, N>;
 
 } // namespace jellyroll
 
