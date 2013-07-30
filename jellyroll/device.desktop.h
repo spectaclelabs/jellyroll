@@ -11,9 +11,9 @@
 namespace jellyroll {
 
 template <size_t M, size_t N>
-class DesktopDevice : public Device<RtAudioCodec<M, N>, M, N> {
+class DesktopDevice : public Device<RtAudioCodec<M, N>> {
 public:
-    DesktopDevice() : Device<RtAudioCodec<M, N>, M, N>(AUDIO_DEVICE) {}
+    DesktopDevice() : Device<RtAudioCodec<M, N>>(AUDIO_DEVICE) {}
 };
 
 template <size_t M, size_t N>

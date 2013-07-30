@@ -11,15 +11,15 @@
 
 namespace jellyroll {
 
-template <size_t M, size_t N>
-class CS43L22Codec : public Codec<M, N> {
+template <size_t N>
+class CS43L22Codec : public Codec<0, N> {
 public:
     CS43L22Codec(PinName i2s_sd, PinName i2s_ws, PinName i2s_ck,
                  PinName i2s_mck, PinName i2c_sda, PinName i2c_scl,
                  PinName reset) : 
             i2s(i2s_sd, i2s_ws, i2s_ck, i2s_mck), i2c(i2c_sda, i2c_scl),
             reset(reset) {
-        i2s.setCallback(&CS43L22Codec::callback, (void *) this);
+        i2s.setTxCallback(&CS43L22Codec::callback, (void *) this);
 
         this->reset = 0;
         wait(0.1);
@@ -49,13 +49,13 @@ public:
         i2s.start();
     }
 
-    void tickOut(thelonious::Block<N> &samples) {
+    void tickOut(thelonious::Block<0> &samples) {
     }
 
-    void tickIn(thelonious::Block<M> &samples) {
+    void tickIn(thelonious::Block<N> &samples) {
         for (uint32_t i=0; i<thelonious::constants::BLOCK_SIZE; i++) {
             for (uint32_t j=0; j<2; j++) {
-                if (j >= M) {
+                if (j >= N) {
                     continue;
                 }
                 float sample = samples[j][i];

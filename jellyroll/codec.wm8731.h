@@ -17,7 +17,7 @@ public:
     WM8731Codec(PinName i2s_sd, PinName i2s_ws, PinName i2s_ck,
                  PinName i2s_mck, PinName i2c_sda, PinName i2c_scl) : 
             i2s(i2s_sd, i2s_ws, i2s_ck, i2s_mck), i2c(i2c_sda, i2c_scl) {
-        i2s.setCallback(&WM8731Codec::callback, (void *) this);
+        i2s.setTxCallback(&WM8731Codec::callback, (void *) this);
 
         // Shoddy hack - should happen in hardware.  Enable pull ups on the
         // I2C lines
@@ -54,10 +54,10 @@ public:
         i2s.start();
     }
 
-    void tickOut(thelonious::Block<N> &samples) {
+    void tickOut(thelonious::Block<M> &samples) {
     }
 
-    void tickIn(thelonious::Block<M> &samples) {
+    void tickIn(thelonious::Block<N> &samples) {
         for (uint32_t i=0; i<thelonious::constants::BLOCK_SIZE; i++) {
             for (uint32_t j=0; j<2; j++) {
                 if (j >= M) {

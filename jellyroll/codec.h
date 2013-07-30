@@ -7,7 +7,7 @@
 namespace jellyroll {
 
 template <uint32_t M, uint32_t N>
-class Codec : public thelonious::Duplex<M, N> {
+class Codec : public thelonious::Duplex<N, M> {
 public:
     virtual void start() = 0;
     virtual void wait() {

@@ -9,11 +9,10 @@
 namespace jellyroll {
 
 template <uint32_t M, uint32_t N>
-class BabadooDevice : public Device<WM8731Codec<M, N>, M, N> {
+class BabadooDevice : public Device<WM8731Codec<M, N>> {
 public:
     BabadooDevice() :
-            Device<WM8731Codec<M, N>, M, N>(PB_15, PB_12, PB_13, PC_6, PB_11,
-                                            PB_10),
+            Device<WM8731Codec<M, N>>(PB_15, PB_12, PB_13, PC_6, PB_11, PB_10),
             outputSwitch(PC_9) {
         outputSwitch = 1;
     }
