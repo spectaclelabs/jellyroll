@@ -13,7 +13,7 @@ namespace jellyroll {
 FunctionPointer i2sirq;
 
 
-typedef void (*I2SCallback) (int16_t *, uint32_t, void *data);
+typedef void (*I2SCallback) (int16_t *, int16_t *, uint32_t, void *data);
 
 extern "C" void i2s_dma_irq_handler() {
     i2sirq.call();
@@ -66,7 +66,7 @@ static const PinMap PinMap_I2S_MCK[] = {
 enum I2SMode {INPUT, OUTPUT, DUPLEX};
 
 static const std::map<int, std::map<I2SMode, int>>
-DMAChannelMap {
+DMAStreamMap {
     {I2S_2, {
         {INPUT, 3},
         {OUTPUT, 4},
@@ -78,12 +78,33 @@ DMAChannelMap {
         {DUPLEX, 5}
     }},
     {I2SE_2, {
-        {DUPLEX, 2}
+        {DUPLEX, 3}
     }},
     {I2SE_3, {
         {DUPLEX, 0}
     }}
 };
+
+static const std::map<int, std::map<I2SMode, int>>
+DMAChannelMap {
+    {I2S_2, {
+        {INPUT, 0},
+        {OUTPUT, 0},
+        {DUPLEX, 0}
+    }},
+    {I2S_3, {
+        {INPUT, 0},
+        {OUTPUT, 0},
+        {DUPLEX, 0}
+    }},
+    {I2SE_2, {
+        {DUPLEX, 3}
+    }},
+    {I2SE_3, {
+        {DUPLEX, 3}
+    }}
+};
+
 
 class I2S {
 public:
@@ -193,78 +214,63 @@ public:
         enableI2S();
     }
 
-    void setRxCallback(I2SCallback callback, void *data=nullptr) {
-        this->rxCallback = callback;
-        this->rxData = data;
+    void setCallback(I2SCallback callback, void *data=nullptr) {
+        this->callback = callback;
+        this->data = data;
     }
-
-    void setTxCallback(I2SCallback callback, void *data=nullptr) {
-        this->txCallback = callback;
-        this->txData = data;
-    }
- 
 
 private:
     void handleDMAInterrupts() {
-        int channel = DMAChannelMap.at((int)i2s).at(currentMode);
+        int stream;
+        if (currentMode != DUPLEX) {
+            stream = DMAStreamMap.at((int)i2s).at(currentMode);
+        }
+        else {
+            stream = DMAStreamMap.at((int)i2s_ext).at(currentMode);
+        }
 
-        I2SCallback callback = nullptr;
-        int16_t *pointer = nullptr;
-        void *data = nullptr;
+        int16_t *inputPointer = nullptr;
+        int16_t *outputPointer = nullptr;
         
 
-        if (halfTransfer(channel)) {
-            clearHalfTransfer(channel);
+        if (halfTransfer(stream)) {
+            clearHalfTransfer(stream);
             switch (currentMode) {
                 case INPUT:
-                    callback = rxCallback;
-                    pointer = inputBuffer;
-                    data = rxData;
+                    inputPointer = inputBuffer;
                     break;
                 case OUTPUT:
+                    outputPointer = outputBuffer;
+                    break;
                 case DUPLEX:
-                    callback = txCallback;
-                    pointer = outputBuffer;
-                    data = txData;
+                    inputPointer = inputBuffer;
+                    outputPointer = outputBuffer;
                     break;
             }
         }
-        else if (transferComplete(channel)) {
-            clearTransferComplete(channel);
+        else if (transferComplete(stream)) {
+            clearTransferComplete(stream);
             switch (currentMode) {
                 case INPUT:
-                    callback = rxCallback;
-                    pointer = inputBuffer +
-                              2 * thelonious::constants::BLOCK_SIZE;
-                    data = rxData;
+                    inputPointer = inputBuffer +
+                                   2 * thelonious::constants::BLOCK_SIZE;
+                    break;
                 case OUTPUT:
+                    outputPointer = outputBuffer +
+                                    2 * thelonious::constants::BLOCK_SIZE;
+                    break;
                 case DUPLEX:
-                    callback = txCallback;
-                    pointer = outputBuffer +
-                              2 * thelonious::constants::BLOCK_SIZE;
-                    data = txData;
-            }
-        }
-
-        if (currentMode == DUPLEX) {
-            int channel_ext = DMAChannelMap.at((int)i2s_ext).at(currentMode);
-            if (halfTransfer(channel_ext)) {
-                clearHalfTransfer(channel_ext);
-                callback =  rxCallback;
-                pointer = inputBuffer;
-                data = rxData;
-            }
-
-            else if (transferComplete(channel_ext)) {
-                clearTransferComplete(channel_ext);
-                callback = rxCallback;
-                pointer = inputBuffer + 2 * thelonious::constants::BLOCK_SIZE;
-                data = rxData;
+                    inputPointer = inputBuffer +
+                                   2 * thelonious::constants::BLOCK_SIZE;
+                    outputPointer = outputBuffer +
+                                    2 * thelonious::constants::BLOCK_SIZE;
+                    break;
             }
         }
 
         if (callback != nullptr) {
-            callback(pointer, thelonious::constants::BLOCK_SIZE, data);
+            callback(inputPointer, outputPointer,
+                     thelonious::constants::BLOCK_SIZE, data);
         }
     }
 
@@ -292,7 +298,7 @@ private:
         if (haveExt) {
             i2s_ext->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
 
-            i2s->I2SPR = 0x2;
+            i2s_ext->I2SPR = 0x2;
         }
 
         bitDepth(16);
@@ -301,72 +307,83 @@ private:
     }
 
     void setupDMA() {
+        int stream = DMAStreamMap.at((int)i2s).at(currentMode);
         int channel = DMAChannelMap.at((int)i2s).at(currentMode);
-        dma = dmaChannelToStream(channel);
+        dma = dmaStream(stream);
 
         int direction = (currentMode == OUTPUT ||
                          currentMode == DUPLEX) ? 1 : 0;
         uint32_t buffer = direction ? (uint32_t) outputBuffer :
                                       (uint32_t) inputBuffer;
 
+        uint32_t IEFLAGS = DMA_SxCR_TCIE | // Transfer complete interrupt
+                           DMA_SxCR_HTIE;  // Transfore half-complete interrupt
+
         dma->PAR = (uint32_t) &(i2s->DR);
         dma->M0AR = buffer;
         dma->NDTR = 4 * thelonious::constants::BLOCK_SIZE;
-        dma->CR = (0x3 << 16) | // Very high priority
+        dma->CR = (channel << 25) |
+                  (0x3 << 16) | // Very high priority
                   (0x1 << 13) | // Half-word memory data size
                   (0x1 << 11) | // Half-word peripheral data size
                   (direction << 6)  | // P2M or M2P
                   DMA_SxCR_MINC | // Increment memory address pointer
                   DMA_SxCR_CIRC | // Circular buffer
-                  DMA_SxCR_TCIE | // Transfer complete interrupt
-                  DMA_SxCR_HTIE;  // Transfer half-complete interrupt
+                  (currentMode == DUPLEX ? 0 : IEFLAGS);
 
         if (currentMode == DUPLEX) {
+            stream = DMAStreamMap.at((int)i2s_ext).at(currentMode);
             channel = DMAChannelMap.at((int)i2s_ext).at(currentMode);
-            dma_ext = dmaChannelToStream(channel);
+            dma_ext = dmaStream(stream);
             dma_ext->PAR = (uint32_t) &(i2s_ext->DR);
             dma_ext->M0AR = (uint32_t) inputBuffer;
             dma_ext->NDTR = 4 * thelonious::constants::BLOCK_SIZE;
-            dma_ext->CR = (0x3 << 16) | // Very high priority
+            dma_ext->CR = (channel << 25) |
+                          (0x3 << 16) | // Very high priority
                           (0x1 << 13) | // Half-word memory data size
                           (0x1 << 11) | // Half-word peripheral data size
                           DMA_SxCR_MINC | // Increment memory address pointer
-                          DMA_SxCR_CIRC | // Circular buffer
-                          DMA_SxCR_TCIE | // Transfer complete interrupt
-                          DMA_SxCR_HTIE;  // Transfer half-complete interrupt
+                          DMA_SxCR_CIRC |  // Circular buffer
+                          IEFLAGS;
         }
     }
 
     void enableI2S() {
         i2s->I2SCFGR |= SPI_I2SCFGR_I2SE;
+        if (currentMode == DUPLEX) {
+            i2s_ext->I2SCFGR |= SPI_I2SCFGR_I2SE;
+        }
     }
 
     void disableI2S() {
         i2s->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        if (currentMode == DUPLEX) {
+            i2s_ext->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        }
     }
 
     void enableDMA() {
         dma->CR |= DMA_SxCR_EN;
+
+        if (currentMode == DUPLEX) {
+            dma_ext->CR |= DMA_SxCR_EN;
+        }
     }
 
     void disableDMA() {
         dma->CR &= ~DMA_SxCR_EN;
+
+        if (currentMode == DUPLEX) {
+            dma_ext->CR &= ~DMA_SxCR_EN;
+        }
     }
 
     void enableVector() {
-        int channel = DMAChannelMap.at((int)i2s).at(currentMode);
-        IRQn irqn = dmaChannelToIRQn(channel);
+        int stream = DMAStreamMap.at((int)i2s).at(currentMode);
+        IRQn irqn = dmaStreamIRQn(stream);
 
         NVIC_SetVector(irqn, (uint32_t)i2s_dma_irq_handler);
         NVIC_EnableIRQ(irqn);
-
-        if (currentMode == DUPLEX) {
-            channel = DMAChannelMap.at((int)i2s_ext).at(currentMode);
-            irqn = dmaChannelToIRQn(channel);
-
-            NVIC_SetVector(irqn, (uint32_t)i2s_dma_irq_handler);
-            NVIC_EnableIRQ(irqn);
-        }
     }
 
     void enableInterrupt() {
@@ -375,8 +392,11 @@ private:
                 i2s->CR2 |= SPI_CR2_RXDMAEN;
                 break;
             case OUTPUT:
+                i2s->CR2 |= SPI_CR2_TXDMAEN;
+                break;
             case DUPLEX:
                 i2s->CR2 |= SPI_CR2_TXDMAEN;
+                i2s_ext->CR2 |= SPI_CR2_RXDMAEN;
                 break;
         }
     }
@@ -387,64 +407,67 @@ private:
                 i2s->CR2 &= ~SPI_CR2_RXDMAEN;
                 break;
             case OUTPUT:
+                i2s->CR2 &= ~SPI_CR2_TXDMAEN;
+                break;
             case DUPLEX:
                 i2s->CR2 &= ~SPI_CR2_TXDMAEN;
+                i2s_ext->CR2 &= ~SPI_CR2_RXDMAEN;
                 break;
         }
     }
 
-    DMA_Stream_TypeDef* dmaChannelToStream(int channel) {
-        return (DMA_Stream_TypeDef *)(DMA1_Stream0_BASE + 0x18 * channel);
+    DMA_Stream_TypeDef* dmaStream(int stream) {
+        return (DMA_Stream_TypeDef *)(DMA1_Stream0_BASE + 0x18 * stream);
     }
 
-    IRQn dmaChannelToIRQn(int channel) {
-        return static_cast<IRQn>(DMA1_Stream0_IRQn + channel);
+    IRQn dmaStreamIRQn(int stream) {
+        return static_cast<IRQn>(DMA1_Stream0_IRQn + stream);
     }
 
 
-    int TCIF(int channel) {
-        return 1 << (channel * 6 + (channel / 2) * 4 + 5);
+    int TCIF(int stream) {
+        return 1 << (stream * 6 + (stream / 2) * 4 + 5);
     }
 
-    int HTIF(int channel) {
-        return 1 << (channel * 6 + (channel / 2) * 4 + 4);
+    int HTIF(int stream) {
+        return 1 << (stream * 6 + (stream / 2) * 4 + 4);
     }
 
-    bool transferComplete(int channel) {
-        if (channel < 4) {
-            return DMA1->LISR & TCIF(channel);
+    bool transferComplete(int stream) {
+        if (stream < 4) {
+            return DMA1->LISR & TCIF(stream);
         }
-        else if (channel < 8) {
-             return DMA1->HISR & TCIF(channel - 4);
+        else if (stream < 8) {
+             return DMA1->HISR & TCIF(stream - 4);
         }
         return false;
     }
 
-    void clearTransferComplete(int channel) {
-        if (channel < 4) {
-            DMA1->LIFCR |= TCIF(channel);
+    void clearTransferComplete(int stream) {
+        if (stream < 4) {
+            DMA1->LIFCR |= TCIF(stream);
         }
-        else if (channel < 8) {
-             DMA1->HIFCR |= TCIF(channel - 4);
+        else if (stream < 8) {
+             DMA1->HIFCR |= TCIF(stream - 4);
         }   
     }
 
-    bool halfTransfer(int channel) {
-        if (channel < 4) {
-            return DMA1->LISR & HTIF(channel);
+    bool halfTransfer(int stream) {
+        if (stream < 4) {
+            return DMA1->LISR & HTIF(stream);
         }
-        else if (channel < 8) {
-             return DMA1->HISR & HTIF(channel - 4);
+        else if (stream < 8) {
+             return DMA1->HISR & HTIF(stream - 4);
         }
         return false;
     }
 
-    void clearHalfTransfer(int channel) {
-        if (channel < 4) {
-            DMA1->LIFCR |= HTIF(channel);
+    void clearHalfTransfer(int stream) {
+        if (stream < 4) {
+            DMA1->LIFCR |= HTIF(stream);
         }
-        else if (channel < 8) {
-             DMA1->HIFCR |= HTIF(channel - 4);
+        else if (stream < 8) {
+             DMA1->HIFCR |= HTIF(stream - 4);
         }
     }
 
@@ -458,11 +481,8 @@ private:
     int16_t inputBuffer[thelonious::constants::BLOCK_SIZE * 4];
     int16_t outputBuffer[thelonious::constants::BLOCK_SIZE * 4];
 
-    I2SCallback rxCallback = nullptr;
-    I2SCallback txCallback = nullptr;
-
-    void *rxData;
-    void *txData;
+    I2SCallback callback = nullptr;
+    void *data;
 
     bool haveExt;
 };

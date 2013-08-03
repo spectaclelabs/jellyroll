@@ -19,7 +19,7 @@ public:
                  PinName reset) : 
             i2s(i2s_sd, i2s_ws, i2s_ck, i2s_mck), i2c(i2c_sda, i2c_scl),
             reset(reset) {
-        i2s.setTxCallback(&CS43L22Codec::callback, (void *) this);
+        i2s.setCallback(&CS43L22Codec::callback, (void *) this);
 
         this->reset = 0;
         wait(0.1);
@@ -79,16 +79,17 @@ private:
         return out[0];
     }
 
-    static void callback(int16_t *outputSamples, uint32_t numberOfSamples,
+    static void callback(int16_t *inputSamples,
+                         int16_t *outputSamples, uint32_t numberOfSamples,
                          void *device) {
         CS43L22Codec *castDevice = (CS43L22Codec *) device;
-        castDevice->setBuffer(outputSamples);
+        castDevice->setOutputBuffer(outputSamples);
         if (castDevice->onAudioCallback != nullptr) {
             (*(castDevice->onAudioCallback))();
         }
     }
 
-    void setBuffer(int16_t *buffer) {
+    void setOutputBuffer(int16_t *buffer) {
         outputBuffer = buffer;
     }
 

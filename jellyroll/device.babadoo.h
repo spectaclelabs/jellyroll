@@ -12,9 +12,14 @@ template <uint32_t M, uint32_t N>
 class BabadooDevice : public Device<WM8731Codec<M, N>> {
 public:
     BabadooDevice() :
-            Device<WM8731Codec<M, N>>(PB_15, PB_12, PB_13, PC_6, PB_11, PB_10),
+            Device<WM8731Codec<M, N>>(PB_11, PB_10, PB_15, PB_12, PB_13, PC_6,
+                                      PB_14),
+            inputSwitch12(PC_7),
+            inputSwitch34(PC_8),
             outputSwitch(PC_9) {
         outputSwitch = 1;
+        inputSwitch12 = 0;
+        inputSwitch34 = 1;
     }
     /*
     void setInputGain(float gain) {
@@ -34,6 +39,8 @@ public:
     }
     */
 private:
+    DigitalOut inputSwitch12;
+    DigitalOut inputSwitch34;
     DigitalOut outputSwitch;
 };
 
